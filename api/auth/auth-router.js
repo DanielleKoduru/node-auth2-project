@@ -20,7 +20,7 @@ router.post("/register", validateRoleName, async (req, res, next) => {
   try {
     const { username, password, role_name } = req.body
     const hashedPw = await bcrypt.hash(password, 4)
-
+    console.log(role_name)
     const newUser = await model.add({
       username,
       password: hashedPw,

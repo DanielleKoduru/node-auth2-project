@@ -18,26 +18,28 @@ const restricted = async (req, res, next) => {
 
     Put the decoded token in the req object, to make life easier for middlewares downstream!
   */
-    try {
-      const token = req.headers.authorization
-        if (!token) {
-          return res.status(401).json({ 
-            message: "Token invalid"
-          })
-        }
-        jwt.verify(token, JWT_SECRET, (err, decoded) => {
-          if (err) {
-            return res.status(401).json({
-              message: "Token invalid"
-            })
-          }
-          req.token = decoded
-
-          next()
-        })
-    } catch(err){
-      next(err)
+  try {
+    console.log(req.headers)
+    const token = req.headers.authorization
+    console.log(token)
+    if (!token) {
+      return res.status(401).json({
+        message: "Token required"
+      })
     }
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({
+          message: "Token invalid"
+        })
+      }
+      req.token = decoded
+
+      next()
+    })
+  } catch (err) {
+    next(err)
+  }
 }
 
 const only = role_name => (req, res, next) => {
@@ -51,17 +53,17 @@ const only = role_name => (req, res, next) => {
 
     Pull the decoded token from the req object, to avoid verifying it again!
   */
- try {
-  const decodedToken = req.token
-  if(role_name !== (decodedToken.role_name)) {
-    return res.status(403).json({
-      message: "This is not for you"
-    })
+  try {
+    const decodedToken = req.token
+    if (role_name !== (decodedToken.role_name)) {
+      return res.status(403).json({
+        message: "This is not for you"
+      })
+    }
+    next()
+  } catch (err) {
+    next(err)
   }
-  next()
- } catch(err){
-   next(err)
- }
 }
 
 
@@ -73,18 +75,18 @@ const checkUsernameExists = async (req, res, next) => {
       "message": "Invalid credentials"
     }
   */
- try {
-  const { username } = req.body
-  const user = await model.findBy({username})
-    if(user.length <1) {
+  try {
+    const { username } = req.body
+    const user = await model.findBy({ username })
+    if (user.length < 1) {
       return res.status(401).json({
         message: "Invalid credentials"
       })
     }
     next()
- } catch(err){
-   next(err)
- }
+  } catch (err) {
+    next(err)
+  }
 }
 
 
@@ -109,7 +111,7 @@ const validateRoleName = async (req, res, next) => {
   */
   try {
     let { role_name } = req.body
-    //not sure how to handle missing role_name or trimming it--still need to finish this
+    role_name ? req.body.role_name = role_name.trim() : '';
     if (!role_name || role_name === "") {
       req.body.role_name = "student"
       return next()
@@ -121,13 +123,13 @@ const validateRoleName = async (req, res, next) => {
       })
     }
 
-    if (req.role_name.length > 32) {
+    if (req.body.role_name.length > 32) {
       return res.status(422).json({
         message: "Role name can not be longer than 32 chars"
       })
     }
     next()
-  } catch(err){
+  } catch (err) {
     next(err)
   }
 }
